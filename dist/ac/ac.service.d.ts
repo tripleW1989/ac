@@ -17,6 +17,7 @@ type Device = {
     socket?: net.Socket;
     isActive: boolean;
     cmd?: CMD;
+    temp?: number;
 };
 export declare class AcService {
     private server;
@@ -30,13 +31,13 @@ export declare class AcService {
     tcpServer(): void;
     matchAddr(ip?: string): string;
     close(addr: number): void;
-    open(addr: number): void;
+    open(addr: number): Promise<void>;
     high(addr: number, temp: number): void;
     down(addr: number, temp: number): void;
-    getTemp(addr: number): void;
+    getTemp(addr: number): Promise<void>;
     set(addr: number, temp: number): void;
     getAddr(addr: number): void;
-    send(addr: number, code: Buffer, cmd: CMD): void;
+    send(addr: number, code: Buffer, cmd: CMD): Promise<void>;
     basicCmd(addr: any, controlCode: CONTROL_CODE, start: Buffer, count: Buffer): Buffer;
     crc16(buffer: Buffer): Buffer;
 }

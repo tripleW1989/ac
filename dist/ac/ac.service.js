@@ -99,9 +99,27 @@ let AcService = class AcService {
         this.send(addr, this.basicCmd(addr, CONTROL_CODE.READ, Buffer.from([0, 0x02]), Buffer.from([0, 1])), CMD.READ_ADDR);
     }
     send(addr, code, cmd) {
-        const device = this.findDevice(addr, 'addr');
-        this.updateDevice(device.ip, { cmd, isActive: !(cmd === CMD.CLOSE) });
-        device.socket?.write(Buffer.from(code));
+        return new Promise((resolve, reject) => {
+            const device = this.findDevice(addr, 'addr');
+            if (!device || !device.socket) {
+                reject(new Error(`Device with address ${addr} not found or not connected.`));
+                return;
+            }
+            device.socket.write(code, (err) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                device.socket.once('data', (response) => {
+                    if ([CMD.READ_TEMP].includes(cmd)) {
+                    }
+                    resolve();
+                });
+                device.socket.once('error', (error) => {
+                    reject(error);
+                });
+            });
+        });
     }
     basicCmd(addr, controlCode, start, count) {
         let baseCode = Buffer.concat([Buffer.from([addr]), Buffer.from([controlCode]), start, count]);

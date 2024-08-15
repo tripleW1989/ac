@@ -18,6 +18,7 @@ type Device = {
   socket?: net.Socket;
   isActive: boolean;
   cmd?: CMD;
+  temp?: number;
 }
 @Injectable()
 export class AcService {
@@ -138,11 +139,37 @@ export class AcService {
   getAddr(addr: number) {
     this.send(addr, this.basicCmd(addr, CONTROL_CODE.READ, Buffer.from([0, 0x02]), Buffer.from([0, 1])), CMD.READ_ADDR);
   }
-  send(addr: number, code: Buffer, cmd: CMD) {
-    const device = this.findDevice(addr, 'addr');
-    this.updateDevice(device.ip, { cmd, isActive: !(cmd === CMD.CLOSE) });
+  send(addr: number, code: Buffer, cmd: CMD): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const device = this.findDevice(addr, 'addr');
+      if (!device || !device.socket) {
+        reject(new Error(`Device with address ${addr} not found or not connected.`));
+        return;
+      }
 
-    device.socket?.write(Buffer.from(code));
+      device.socket.write(code, (err) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+
+        // Listen for the response
+        device.socket.once('data', (response) => {
+
+          if ([CMD.READ_TEMP].includes(cmd)) {
+            // TODO: 根据指令更新不同的状态
+            // const temperature = this.parseTemperature(response);
+            // this.updateDevice(device.ip, { temperature });
+          }
+
+          resolve();
+        });
+
+        device.socket.once('error', (error) => {
+          reject(error);
+        });
+      });
+    });
   }
   basicCmd(addr, controlCode: CONTROL_CODE, start: Buffer, count: Buffer) {
     // 8位-地址 | 8-功能码 03读,06写| 16位-起始地址 | 16位-操作数量 | 16位-校验码

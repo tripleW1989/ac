@@ -57,6 +57,10 @@ export class AcController {
                     this.service.set(data.addr, data.value);
                     break;
                 }
+            case '查询开关状态':
+                {
+
+                }
             default:
 
         }

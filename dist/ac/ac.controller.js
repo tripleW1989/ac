@@ -53,6 +53,9 @@ let AcController = class AcController {
                     this.service.set(data.addr, data.value);
                     break;
                 }
+            case '查询开关状态':
+                {
+                }
             default:
         }
         res.status(common_1.HttpStatus.OK).send({ message: '操作成功' });
